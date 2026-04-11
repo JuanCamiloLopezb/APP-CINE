@@ -1,7 +1,7 @@
 Flask==2.3.3
-Flask-Cors==3.0.10
+Flask-Cors==4.0.0
 PyMySQL==1.1.0
-qrcode==7.4
-Pillow==9.5.0
-python-dotenv==1.0.0
+qrcode[pil]==7.4.2
+Pillow==10.3.0
+python-dotenv==1.0.1
 gunicorn==21.2.0

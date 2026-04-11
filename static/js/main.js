@@ -1,4 +1,4 @@
-const API = '/api';
+const API = window.location.origin + '/api';
 let user = null;
 let fActual = null, pBase = 0, sillasSelect = [];
 let confiteriaDB = [], confiCarrito = [], confiNombres = [];

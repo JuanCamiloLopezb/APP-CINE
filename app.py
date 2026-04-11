@@ -12,13 +12,15 @@ app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 def get_db():
     return pymysql.connect(
-        host=os.getenv('MYSQLHOST'),
-        user=os.getenv('MYSQLUSER'),
-        password=os.getenv('MYSQLPASSWORD'),
-        database=os.getenv('MYSQLDATABASE'),
-        port=int(os.getenv('MYSQLPORT', 3306)),
-        cursorclass=pymysql.cursors.DictCursor
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME'),
+        port=3306, 
+        cursorclass=pymysql.cursors.DictCursor,
+        ssl={"fake_flag": True} 
     )
+    
 
 @app.route('/')
 def index(): return render_template('index.html')

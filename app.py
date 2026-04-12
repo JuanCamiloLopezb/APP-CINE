@@ -11,16 +11,19 @@ os.makedirs(os.path.join('static', 'uploads'), exist_ok=True)
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 def get_db():
-    return pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME'),
-        port=3306, 
-        cursorclass=pymysql.cursors.DictCursor,
-        ssl={"fake_flag": True} 
-    )
+    host = os.getenv('DB_HOST', 'localhost')
+    # Desactivamos SSL si estás corriendo el proyecto en tu PC local
+    use_ssl = {"fake_flag": True} if host not in ['localhost', '127.0.0.1'] else None
     
+    return pymysql.connect(
+        host=host,
+        user=os.getenv('DB_USER', 'root'),
+        password=os.getenv('DB_PASSWORD', ''),
+        database=os.getenv('DB_NAME', 'test'),
+        port=int(os.getenv('DB_PORT', 3306)), 
+        cursorclass=pymysql.cursors.DictCursor,
+        ssl=use_ssl 
+    )
 
 @app.route('/')
 def index(): return render_template('index.html')
@@ -29,32 +32,52 @@ def index(): return render_template('index.html')
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.json
+    # Limpieza de espacios y forzar minúsculas
+    nombre = data['nombre'].strip()
+    email = data['email'].strip().lower()
+    password = data['password'].strip()
+    
     conn = get_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)", (data['nombre'], data['email'], data['password']))
+            cursor.execute("INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)", (nombre, email, password))
         conn.commit()
         return jsonify({"success": True})
     except pymysql.IntegrityError:
-        return jsonify({"error": "Email registrado"}), 400
-    finally: conn.close()
+        return jsonify({"error": "El email ya está registrado"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error de BD: {str(e)}"}), 500
+    finally: 
+        conn.close()
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT id, nombre, rol FROM usuarios WHERE email=%s AND password=%s", (data['email'], data['password']))
-        user = cursor.fetchone()
-    conn.close()
-    return jsonify({"success": True, "user": user}) if user else jsonify({"error": "Error de credenciales"}), 401
+    # Limpieza de datos para coincidir exactamente
+    email = data['email'].strip().lower()
+    password = data['password'].strip()
+    
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id, nombre, rol FROM usuarios WHERE email=%s AND password=%s", (email, password))
+            user = cursor.fetchone()
+        conn.close()
+        
+        if user:
+            return jsonify({"success": True, "user": user})
+        else:
+            return jsonify({"error": "Correo o contraseña incorrectos"}), 401
+    except Exception as e:
+        # Muestra el error real si la BD falla
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 # --- ADMIN ---
 @app.route('/api/peliculas', methods=['GET'])
 def get_all_peliculas():
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM peliculas") # AHORA TRAE TODA LA INFO
+        cursor.execute("SELECT * FROM peliculas") 
         datos = cursor.fetchall()
     conn.close()
     return jsonify(datos)
@@ -63,7 +86,12 @@ def get_all_peliculas():
 def admin_stats():
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT SUM(total) as ingresos, COUNT(id) as boletos FROM tiquetes WHERE estado IN ('activo', 'usado')")
+        cursor.execute("""
+            SELECT SUM(t.total) as ingresos, COUNT(d.id) as boletos 
+            FROM tiquetes t 
+            LEFT JOIN detalle_tiquete_asientos d ON t.id = d.tiquete_id 
+            WHERE t.estado IN ('activo', 'usado')
+        """)
         tiquetes = cursor.fetchone()
         cursor.execute("SELECT COUNT(id) as total_funciones FROM funciones")
         funciones = cursor.fetchone()
@@ -81,13 +109,12 @@ def add_pelicula():
         imagen = request.files.get('imagen')
         filename = secure_filename(imagen.filename) if imagen else ""
         if imagen: imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        cursor.execute("INSERT INTO peliculas (titulo, sinopsis, clasificacion, duracion, actores, imagen) VALUES (%s, %s, %s, %s, %s, %s)",
-                       (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], filename))
+        cursor.execute("INSERT INTO peliculas (titulo, sinopsis, clasificacion, duracion, actores, imagen, formato) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                       (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], filename, request.form.get('formato', '2D')))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
 
-# NUEVO: EDITAR PELÍCULA
 @app.route('/api/admin/peliculas/<int:id>', methods=['PUT'])
 def edit_pelicula(id):
     conn = get_db()
@@ -96,16 +123,15 @@ def edit_pelicula(id):
         if imagen:
             filename = secure_filename(imagen.filename)
             imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            cursor.execute("UPDATE peliculas SET titulo=%s, sinopsis=%s, clasificacion=%s, duracion=%s, actores=%s, imagen=%s WHERE id=%s",
-                           (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], filename, id))
+            cursor.execute("UPDATE peliculas SET titulo=%s, sinopsis=%s, clasificacion=%s, duracion=%s, actores=%s, imagen=%s, formato=%s WHERE id=%s",
+                           (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], filename, request.form.get('formato', '2D'), id))
         else:
-            cursor.execute("UPDATE peliculas SET titulo=%s, sinopsis=%s, clasificacion=%s, duracion=%s, actores=%s WHERE id=%s",
-                           (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], id))
+            cursor.execute("UPDATE peliculas SET titulo=%s, sinopsis=%s, clasificacion=%s, duracion=%s, actores=%s, formato=%s WHERE id=%s",
+                           (request.form['titulo'], request.form['sinopsis'], request.form['clasificacion'], request.form['duracion'], request.form['actores'], request.form.get('formato', '2D'), id))
     conn.commit()
     conn.close()
     return jsonify({"success": True})
 
-# NUEVO: ELIMINAR PELÍCULA
 @app.route('/api/admin/peliculas/<int:id>', methods=['DELETE'])
 def delete_pelicula(id):
     conn = get_db()
@@ -115,7 +141,7 @@ def delete_pelicula(id):
         conn.commit()
         return jsonify({"success": True})
     except pymysql.IntegrityError:
-        return jsonify({"error": "No puedes eliminar esta película porque tiene funciones y boletos vendidos asociados. Primero elimina sus funciones."}), 400
+        return jsonify({"error": "No puedes eliminar esta película porque tiene funciones y boletos vendidos."}), 400
     finally: conn.close()
 
 @app.route('/api/admin/funciones', methods=['POST'])
@@ -144,6 +170,19 @@ def validar_tiquete():
         conn.commit()
         return jsonify({"success": True, "mensaje": "Ingreso autorizado."})
 
+@app.route('/api/admin/confiteria', methods=['POST'])
+def add_confiteria():
+    conn = get_db()
+    with conn.cursor() as cursor:
+        imagen = request.files.get('imagen')
+        filename = secure_filename(imagen.filename) if imagen else ""
+        if imagen: imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        cursor.execute("INSERT INTO confiteria (nombre, precio, imagen) VALUES (%s, %s, %s)",
+                       (request.form['nombre'], request.form['precio'], filename))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
 # --- CLIENTE ---
 @app.route('/api/datos_compra', methods=['GET'])
 def get_datos_compra():
@@ -159,11 +198,40 @@ def get_datos_compra():
 def cartelera():
     conn = get_db()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT p.*, f.id as funcion_id, f.fecha, f.hora, f.precio_base FROM peliculas p JOIN funciones f ON p.id = f.pelicula_id")
+        cursor.execute("SELECT p.*, f.id as funcion_id, f.fecha, f.hora, f.precio_base FROM peliculas p LEFT JOIN funciones f ON p.id = f.pelicula_id")
         datos = cursor.fetchall()
-    for d in datos: d['hora'], d['fecha'], d['precio_base'] = str(d['hora']), str(d['fecha']), float(d['precio_base'])
+    for d in datos: 
+        if d['hora']: d['hora'] = str(d['hora'])
+        if d['fecha']: d['fecha'] = str(d['fecha'])
+        if d['precio_base']: d['precio_base'] = float(d['precio_base'])
     conn.close()
     return jsonify(datos)
+@app.route('/api/admin/funciones/<int:id>', methods=['DELETE'])
+def delete_funcion(id):
+    conn = get_db()
+    try:
+        conn.begin() 
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id FROM tiquetes WHERE funcion_id=%s", (id,))
+            tiquetes = cursor.fetchall()
+            
+            if tiquetes:
+                tiquetes_ids = [str(t['id']) for t in tiquetes]
+                placeholders = ','.join(['%s'] * len(tiquetes_ids))
+                cursor.execute(f"DELETE FROM detalle_tiquete_asientos WHERE tiquete_id IN ({placeholders})", tiquetes_ids)
+                
+                
+                cursor.execute(f"DELETE FROM tiquetes WHERE id IN ({placeholders})", tiquetes_ids)
+            
+            cursor.execute("DELETE FROM funciones WHERE id=%s", (id,))
+            
+        conn.commit()
+        return jsonify({"success": True, "mensaje": "Función y boletos eliminados con éxito."})
+    except Exception as e:
+        conn.rollback() 
+        return jsonify({"error": f"Error crítico al eliminar: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals() and conn.open: conn.close()
 
 @app.route('/api/funciones/<int:f_id>/asientos', methods=['GET'])
 def asientos(f_id):
@@ -183,7 +251,7 @@ def mis_entradas(u_id):
     conn = get_db()
     with conn.cursor() as cursor:
         cursor.execute("""
-            SELECT t.id, t.codigo_validacion, t.total, t.estado, f.fecha, f.hora, p.titulo, p.imagen,
+            SELECT t.id, t.codigo_validacion, t.codigo_qr, t.total, t.estado, f.fecha, f.hora, p.titulo, p.imagen,
                    (SELECT GROUP_CONCAT(a.numero SEPARATOR ', ') FROM detalle_tiquete_asientos dta JOIN asientos a ON dta.asiento_id = a.id WHERE dta.tiquete_id = t.id) as sillas
             FROM tiquetes t JOIN funciones f ON t.funcion_id = f.id JOIN peliculas p ON f.pelicula_id = p.id
             WHERE t.usuario_id = %s ORDER BY t.id DESC

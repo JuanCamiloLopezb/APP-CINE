@@ -17,54 +17,87 @@ hr { border-color: #333; margin: 25px 0; }
 
 /* NavBar Moderno */
 .navbar { background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); position: sticky; top: 0; z-index: 100;}
-.logo { font-size: 28px; font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--primary); cursor: pointer; text-shadow: 0 0 15px rgba(237,28,36,0.5); }
+.logo { font-size: 28px; font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--primary); cursor: pointer; transition: 0.3s;}
+.logo:hover { color: var(--gold); transform: scale(1.05); }
 
-.container { max-width: 1200px; margin: 30px auto; padding: 20px; }
+/* NUEVO: Links de menú central */
+.nav-menu { display: flex; gap: 30px; }
+.nav-link { color: white; text-decoration: none; font-weight: bold; font-family: 'Montserrat', sans-serif; font-size: 16px; transition: 0.3s; padding: 5px 0;}
+.nav-link:hover { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
-/* Inputs Redondeados */
-input, textarea, select { width: 100%; padding: 15px; margin-bottom: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; box-sizing: border-box; font-family: 'Poppins', sans-serif; transition: 0.3s;}
-input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 10px rgba(237,28,36,0.3); }
+/* Buscador */
+.search-container { max-width: 600px; margin: 0 auto 40px auto; }
+#movie-search { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid var(--primary); background: #1a1a1a; color: white; font-size: 16px; outline: none; transition: 0.3s;}
+#movie-search:focus { box-shadow: 0 0 15px rgba(237, 28, 36, 0.4); border-color: var(--gold);}
 
-/* Botones Estilo Píldora */
-button { width: 100%; padding: 15px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; border: none; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 15px;}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-hover); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(237, 28, 36, 0.5); }
-.btn-secondary { background: var(--gold); color: #000; }
-.btn-secondary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(242, 169, 0, 0.4); }
-.btn-outline { background: transparent; border: 2px solid var(--text); color: var(--text); padding: 10px 20px; width: auto;}
-.btn-outline:hover { background: var(--text); color: var(--bg); }
+.container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
 
-/* Estadísticas Admin (Glassmorphism) */
-.stats-grid { display: flex; gap: 20px; margin-bottom: 30px; }
-.stat-card { background: linear-gradient(135deg, rgba(31,40,51,0.9), rgba(11,12,16,0.9)); padding: 25px; border-radius: 20px; border-top: 5px solid var(--primary); text-align: center; flex: 1; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
-.stat-card h3 { font-size: 14px; color: var(--gold); margin-bottom: 10px; }
-.stat-card p { font-size: 32px; font-weight: 700; color: white; margin: 0; font-family: 'Montserrat', sans-serif;}
+/* Botones */
+button { font-family: 'Poppins', sans-serif; font-weight: bold; cursor: pointer; border-radius: 5px; padding: 10px 20px; transition: 0.3s; font-size: 14px; text-transform: uppercase;}
+.btn-primary { background: var(--primary); color: white; border: none; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(237, 28, 36, 0.4); }
+.btn-secondary { background: var(--gold); color: black; border: none; }
+.btn-secondary:hover { background: #d69500; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(242, 169, 0, 0.4); }
+.btn-outline { background: transparent; color: var(--title); border: 2px solid var(--primary); }
+.btn-outline:hover { background: var(--primary); color: white; }
 
-/* Películas Card */
-.peliculas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
-.pelicula-card { background: var(--panel); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; padding-bottom: 20px; transition: 0.3s; }
-.pelicula-card:hover { transform: translateY(-10px); }
-.pelicula-card img { width: 100%; height: 400px; object-fit: cover; border-bottom: 4px solid var(--primary); }
-.pelicula-card h3 { color: var(--gold); margin: 15px 0 5px; font-size: 22px;}
-.pelicula-card p { margin: 5px 0; font-size: 14px;}
+/* Paneles y Formularios */
+.admin-panel, .auth-box { background: var(--panel); padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.auth-container { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 50px; }
+.auth-box { width: 100%; max-width: 400px; }
+input, select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; background: #0b0c10; color: white; border: 1px solid #45a29e; border-radius: 5px; box-sizing: border-box; font-family: 'Poppins', sans-serif;}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 8px rgba(242, 169, 0, 0.3); }
 
-/* Paneles */
-.auth-box, .admin-panel, .checkout-box { background: var(--panel); padding: 35px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); margin: 0 auto;}
-.auth-box { max-width: 450px; }
-.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+/* Grids */
+.peliculas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
+.pelicula-card { background: var(--panel); padding: 15px; border-radius: 10px; transition: 0.3s; }
+.pelicula-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.5); border: 1px solid var(--primary);}
+.pelicula-card img { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;}
+.pelicula-card h3 { margin: 0 0 10px 0; font-size: 18px; color: var(--gold); }
+.pelicula-card p { font-size: 13px; margin: 5px 0; color: #aaa; }
 
-/* Sala de Cine */
-.sala-cine { background: #111; padding: 40px; border-radius: 20px; border: 1px solid #333; text-align: center; }
-.pantalla { background: linear-gradient(to bottom, #fff, #555); height: 50px; margin: 0 auto 60px auto; border-radius: 50% 50% 0 0; color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900; line-height: 50px; width: 85%; box-shadow: 0 20px 40px rgba(255,255,255,0.15); letter-spacing: 10px;}
+.funciones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;}
+
+/* Estadisticas */
+.stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-box { background: linear-gradient(135deg, var(--panel) 0%, #111 100%); padding: 20px; border-radius: 10px; text-align: center; border-left: 4px solid var(--gold); }
+.stat-box h3 { margin: 0 0 10px 0; color: #aaa; font-size: 14px;}
+.stat-box p { margin: 0; font-size: 32px; font-weight: bold; color: var(--title); font-family: 'Montserrat', sans-serif; }
+
+/* Sala y Asientos */
+.pantalla-cine { background: linear-gradient(to bottom, #fff, #555); height: 50px; margin: 0 auto 60px auto; border-radius: 50% 50% 0 0; color: #000; font-family: 'Montserrat', sans-serif; font-weight: 900; line-height: 50px; width: 85%; box-shadow: 0 20px 40px rgba(255,255,255,0.15); letter-spacing: 10px;}
 .asientos-grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 8px; max-width: 900px; margin: 0 auto; }
-.asiento { background: #333; color: white; font-size: 11px; padding: 12px 0; border-radius: 8px 8px 2px 2px; cursor: pointer; transition: 0.2s;}
+.asiento { background: #333; color: white; font-size: 11px; padding: 12px 0; border-radius: 8px 8px 2px 2px; cursor: pointer; transition: 0.2s; text-align: center;}
 .asiento.libre:hover { background: #666; transform: scale(1.1); }
 .asiento.ocupado { background: var(--primary); cursor: not-allowed; opacity: 0.3; }
 .asiento.seleccionado { background: var(--gold); color: black; font-weight: bold; transform: scale(1.1); box-shadow: 0 0 10px var(--gold);}
 
 /* Confiteria y QR */
-.confi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.resumen-caja { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px; margin-top: 20px; border-left: 4px solid var(--gold);}
-.input-pin { font-size: 30px; text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: 10px; max-width: 300px; display: block; margin: 0 auto 20px auto;}
-.qr-text { background: #000; padding: 20px; margin: 20px 0; border-radius: 10px; border: 2px dashed var(--gold); }
-.total-texto { font-size: 32px; border-top: 1px solid #333; padding-top: 20px; margin-top: 20px;}
+.confi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+.validador-panel { background: linear-gradient(135deg, #1f2833 0%, #111 100%); border: 2px dashed var(--gold); text-align: center; padding: 40px;}
+.input-pin { text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 10px; width: 250px; padding: 15px; margin: 20px auto; display: block; border: 2px solid var(--gold);}
+
+@media (max-width: 768px) {
+    .navbar { flex-direction: column; gap: 15px; padding: 15px; }
+    .nav-menu { flex-direction: column; gap: 10px; width: 100%; text-align: center; }
+    #nav-actions { display: flex; flex-direction: column; width: 100%; gap: 10px; }
+    #user-menu { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    #user-menu button { margin: 0 !important; width: 100%; }
+
+    .peliculas-grid, .funciones-grid, .confi-grid { grid-template-columns: 1fr; }
+    .stats-container { grid-template-columns: 1fr; }
+    
+    .asientos-grid { 
+        grid-template-columns: repeat(15, minmax(30px, 1fr)); 
+        overflow-x: auto; 
+        padding-bottom: 15px;
+    }
+    .pantalla-cine { width: 100%; font-size: 14px; letter-spacing: 5px; }
+    
+    div[style*="grid-template-columns: 2fr 1fr;"],
+    div[style*="grid-template-columns: 1fr 1fr;"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #detalle-content > div { flex-direction: column; align-items: center; text-align: center; }
+}

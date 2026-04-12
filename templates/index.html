@@ -5,10 +5,17 @@
     <title>CINEX - El mejor cine</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <nav class="navbar">
         <div class="logo" onclick="initApp()">🎬 CINEX</div>
+        
+        <div class="nav-menu">
+            <a href="#" onclick="switchMenu('view-client')" class="nav-link">Películas</a>
+            <a href="#" onclick="switchMenu('view-comidas')" class="nav-link">Comidas</a>
+        </div>
+
         <div id="nav-actions">
             <button id="btn-login" class="btn-outline" onclick="switchView('view-auth')">Ingresar / Registrarse</button>
             <div id="user-menu" class="hidden">
@@ -20,98 +27,160 @@
     </nav>
 
     <div class="container">
+        
         <div id="view-client">
             <h1>En Cartelera</h1>
+            
+            <div class="search-container">
+                <input type="text" id="movie-search" placeholder="🔍 Buscar película por título o actores..." oninput="filtrarPeliculas()">
+            </div>
+
             <div id="cartelera-grid" class="peliculas-grid"></div>
         </div>
 
-        <div id="view-auth" class="hidden auth-box">
-            <h2>Acceso al sistema</h2>
-            <input type="email" id="log-email" placeholder="Correo">
-            <input type="password" id="log-pass" placeholder="Contraseña">
-            <button class="btn-primary" onclick="login()">Ingresar</button>
-            <hr>
-            <h2>Crear Cuenta</h2>
-            <input type="text" id="reg-nombre" placeholder="Nombre completo">
-            <input type="email" id="reg-email" placeholder="Correo">
-            <input type="password" id="reg-pass" placeholder="Contraseña">
-            <button class="btn-secondary" onclick="register()">Registrarse</button>
+        <div id="view-pelicula-detalle" class="hidden">
+            <button class="btn-outline" onclick="switchView('view-client')" style="margin-bottom: 20px;">⬅ Volver a Cartelera</button>
+            <div id="detalle-content" class="detalle-pelicula"></div>
+            <h2 style="margin-top: 40px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">Funciones Disponibles</h2>
+            <div id="detalle-funciones" class="funciones-grid"></div>
         </div>
 
-        <div id="view-sala" class="hidden sala-cine">
-            <h2>Selección de Asientos</h2>
-            <div class="pantalla">PANTALLA</div>
-            <div id="mapa-asientos" class="asientos-grid"></div>
-            <button class="btn-primary" style="margin-top:20px;" onclick="irACheckout()">Siguiente: Confitería</button>
+        <div id="view-comidas" class="hidden">
+            <h1>Nuestra Confitería</h1>
+            <p style="text-align: center; margin-bottom: 30px; color: #aaa;">Añade tus combos favoritos durante el proceso de compra de boletos.</p>
+            <div id="comidas-grid" class="confi-grid"></div>
         </div>
 
-        <div id="view-checkout" class="hidden checkout-box">
-            <h2>Confitería</h2>
-            <div id="confiteria-grid" class="confi-grid"></div>
-            <div class="resumen-caja">
-                <h3>Agregado al combo:</h3><ul id="lista-confi"></ul>
+        <div id="view-auth" class="hidden auth-container">
+            <div class="auth-box">
+                <h2>Iniciar Sesión</h2>
+                <form id="form-login" onsubmit="login(event)">
+                    <input type="email" id="l-email" placeholder="Correo Electrónico" required>
+                    <input type="password" id="l-pwd" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Entrar</button>
+                </form>
             </div>
-            <h2>Pago</h2>
-            <select id="metodo-pago">
-                <option value="Tarjeta">Tarjeta Bancaria</option><option value="PSE">PSE</option>
-            </select>
-            <h2 class="total-texto">Total: $<span id="total-final">0</span></h2>
-            <button class="btn-primary" onclick="procesarCompra()">Finalizar Compra</button>
+            <div class="auth-box">
+                <h2>Crear Cuenta</h2>
+                <form id="form-register" onsubmit="register(event)">
+                    <input type="text" id="r-nombre" placeholder="Nombre Completo" required>
+                    <input type="email" id="r-email" placeholder="Correo Electrónico" required>
+                    <input type="password" id="r-pwd" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-secondary">Registrarse</button>
+                </form>
+            </div>
         </div>
 
-        <div id="view-qr" class="hidden auth-box text-center">
-            <h2>¡Reserva Confirmada!</h2>
-            <img id="qr-img" src="" width="100%">
-            <div class="qr-text">
-                <p><strong>Asientos:</strong> <span id="qr-asientos"></span></p>
-                <p><strong>PIN DE INGRESO: <br><span id="qr-codigo" style="color:var(--primary); font-size:36px;"></span></strong></p>
+        <div id="view-sala" class="hidden text-center">
+            <h2 id="sala-title"></h2>
+            <div class="pantalla-cine">PANTALLA</div>
+            <div id="asientos-grid" class="asientos-grid"></div>
+            <button class="btn-primary" style="margin-top: 30px; width: 100%; max-width: 300px;" onclick="irACheckout()">Continuar a Pago</button>
+        </div>
+
+        <div id="view-checkout" class="hidden">
+            <h2>Completa tu Compra</h2>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+                <div>
+                    <h3>Confitería</h3>
+                    <div id="confi-grid" class="confi-grid"></div>
+                </div>
+                <div class="admin-panel">
+                    <h3>Resumen</h3>
+                    <p><strong>Asientos:</strong> <span id="res-asientos"></span></p>
+                    
+                    <div id="gafas-3d-container" class="hidden" style="margin: 15px 0; padding: 10px; background: rgba(242, 169, 0, 0.2); border: 1px solid var(--gold); border-radius: 8px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; color: var(--gold); font-weight: bold;">
+                            <input type="checkbox" id="check-gafas" onchange="calcularTotal()" style="margin-right: 10px; width: 20px; height: 20px;">
+                            Agregar Gafas 3D ($3,000 c/u por asiento)
+                        </label>
+                    </div>
+
+                    <hr>
+                    <div id="res-confi"></div>
+                    <hr>
+                    <h2 style="color: var(--gold);">Total: $<span id="total-pago">0</span></h2>
+                    
+                    <select id="metodo-pago" style="margin-top: 20px; width: 100%; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">
+                        <option value="TDC">Tarjeta de Crédito</option>
+                        <option value="TDD">Tarjeta de Débito</option>
+                        <option value="PSE">PSE</option>
+                    </select>
+                    <button class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="procesarPago()">Pagar Ahora</button>
+                </div>
             </div>
-            <button class="btn-secondary" onclick="initApp()">Volver a Inicio</button>
+        </div>
+
+        <div id="view-qr" class="hidden text-center">
+            <h1 style="color: #4CAF50;">¡Compra Exitosa!</h1>
+            <p>Presenta este código en la entrada</p>
+            <img id="qr-img" src="" alt="Código QR" style="margin: 20px auto; border: 10px solid white; border-radius: 10px;">
+            <h2 style="color: var(--gold); letter-spacing: 5px;">PIN: <span id="qr-pin"></span></h2>
+            <p id="qr-asientos" style="font-size: 20px;"></p>
+            <button class="btn-outline" onclick="initApp()">Volver al Inicio</button>
         </div>
 
         <div id="view-entradas" class="hidden">
-            <h1>Mis Entradas (Billetera)</h1>
-            <div id="entradas-grid" class="peliculas-grid"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>Mis Entradas</h1>
+                <button class="btn-primary" onclick="initApp()">Regresar al Inicio</button>
+            </div>
+            <div id="lista-entradas"></div>
         </div>
 
         <div id="view-admin" class="hidden">
-            <h1>Dashboard Administrativo</h1>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Ventas Totales</h3><p>$<span id="stat-ventas">0</span></p>
-                </div>
-                <div class="stat-card">
-                    <h3>Boletos Vendidos</h3><p><span id="stat-boletos">0</span></p>
-                </div>
-                <div class="stat-card">
-                    <h3>Ocupación Global</h3><p><span id="stat-ocupacion">0</span>%</p>
-                </div>
+            <h1>Panel de Administración</h1>
+            <div class="stats-container">
+                <div class="stat-box"><h3>Ingresos</h3><p>$<span id="stat-ingresos">0</span></p></div>
+                <div class="stat-box"><h3>Sillas Vendidas</h3><p><span id="stat-boletos">0</span></p></div>
+                <div class="stat-box"><h3>Ocupación</h3><p><span id="stat-ocupacion">0</span>%</p></div>
             </div>
 
-            <div class="admin-grid">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
                 <div class="admin-panel">
                     <h2>Gestión de Películas</h2>
-                    <form id="form-pelicula" onsubmit="savePelicula(event)">
-                        <input type="text" id="p-tit" placeholder="Título" required>
-                        <textarea id="p-sin" placeholder="Sinopsis"></textarea>
-                        <input type="number" id="p-dur" placeholder="Duración (min)" required>
-                        <input type="text" id="p-clas" placeholder="Clasificación (+13)" required>
-                        <input type="text" id="p-act" placeholder="Actores">
+                    <form id="form-pelicula" onsubmit="addOrUpdatePelicula(event)">
+                        <input type="text" id="p-titulo" placeholder="Título" required>
+                        <textarea id="p-sinopsis" placeholder="Sinopsis" rows="3" required></textarea>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <input type="text" id="p-clasificacion" placeholder="Clasificación (Ej: +12)" required>
+                            <input type="number" id="p-duracion" placeholder="Duración (min)" required>
+                        </div>
+                        
+                        <select id="p-formato" required>
+                            <option value="2D">Formato 2D</option>
+                            <option value="3D">Formato 3D</option>
+                        </select>
+
+                        <input type="text" id="p-actores" placeholder="Actores (separados por coma)" required>
+                        <label style="display:block; margin-top:10px; color:#aaa;">Póster Oficial:</label>
                         <input type="file" id="p-img" accept="image/*" required>
-                        <button type="submit" id="btn-guardar-peli" class="btn-primary">Registrar Película</button>
+                        <button type="submit" id="btn-guardar-peli" class="btn-primary" style="margin-top: 15px; width: 100%;">Registrar Película</button>
                     </form>
                 </div>
+                
                 <div class="admin-panel">
                     <h2>Programar Función</h2>
-                    <form onsubmit="addFuncion(event)">
-                        <select id="f-pelicula" required><option value="">Cargando...</option></select>
+                    <form id="form-funcion" onsubmit="addFuncion(event)">
+                        <select id="f-pelicula" required></select>
                         <input type="date" id="f-fecha" required>
                         <input type="time" id="f-hora" required>
-                        <input type="number" id="f-precio" placeholder="Precio Boleto ($)" required>
-                        <button class="btn-secondary">Asignar a Sala</button>
+                        <input type="number" id="f-precio" placeholder="Precio Base ($)" required>
+                        <button type="submit" class="btn-secondary">Asignar a Sala</button>
+                    </form>
+                    
+                    <h2 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #444;">Agregar Producto Confitería</h2>
+                    <form id="form-confiteria" onsubmit="addConfiteria(event)">
+                        <input type="text" id="c-nombre" placeholder="Nombre del combo o producto" required>
+                        <input type="number" id="c-precio" placeholder="Precio ($)" required>
+                        <label style="display:block; margin-top:10px; color:#aaa;">Imagen del producto:</label>
+                        <input type="file" id="c-img" accept="image/*" required>
+                        <button type="submit" class="btn-outline" style="margin-top: 15px; width: 100%;">Añadir Producto</button>
                     </form>
                 </div>
-                <div class="admin-panel validador-panel">
+
+                <div class="admin-panel validador-panel" style="grid-column: 1 / -1;">
                     <h2>Validar PIN de Ingreso</h2>
                     <input type="text" id="v-codigo" placeholder="PIN 4 DÍGITOS" maxlength="4" class="input-pin">
                     <button class="btn-primary" onclick="validarIngreso()">Verificar Ingreso</button>
@@ -126,7 +195,7 @@
                                     <th style="padding: 10px;">ID</th>
                                     <th>Título</th>
                                     <th>Duración</th>
-                                    <th>Clasificación</th>
+                                    <th>Formato</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>

@@ -20,7 +20,6 @@ hr { border-color: #333; margin: 25px 0; }
 .logo { font-size: 28px; font-family: 'Montserrat', sans-serif; font-weight: 900; color: var(--primary); cursor: pointer; transition: 0.3s;}
 .logo:hover { color: var(--gold); transform: scale(1.05); }
 
-/* NUEVO: Links de menú central */
 .nav-menu { display: flex; gap: 30px; }
 .nav-link { color: white; text-decoration: none; font-weight: bold; font-family: 'Montserrat', sans-serif; font-size: 16px; transition: 0.3s; padding: 5px 0;}
 .nav-link:hover { color: var(--gold); border-bottom: 2px solid var(--gold); }
@@ -77,6 +76,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
 .validador-panel { background: linear-gradient(135deg, #1f2833 0%, #111 100%); border: 2px dashed var(--gold); text-align: center; padding: 40px;}
 .input-pin { text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 10px; width: 250px; padding: 15px; margin: 20px auto; display: block; border: 2px solid var(--gold);}
 
+/* --- DISEÑO RESPONSIVE (MÓVILES Y TABLETS) --- */
 @media (max-width: 768px) {
     .navbar { flex-direction: column; gap: 15px; padding: 15px; }
     .nav-menu { flex-direction: column; gap: 10px; width: 100%; text-align: center; }

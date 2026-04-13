@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CINEX - El mejor cine</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <nav class="navbar">
@@ -30,11 +30,9 @@
         
         <div id="view-client">
             <h1>En Cartelera</h1>
-            
             <div class="search-container">
                 <input type="text" id="movie-search" placeholder="🔍 Buscar película por título o actores..." oninput="filtrarPeliculas()">
             </div>
-
             <div id="cartelera-grid" class="peliculas-grid"></div>
         </div>
 
@@ -61,9 +59,10 @@
                 </form>
             </div>
             <div class="auth-box">
-                <h2>Crear Cuenta</h2>
+                <h2>Crear Cuenta (Gana 5 Puntos)</h2>
                 <form id="form-register" onsubmit="register(event)">
                     <input type="text" id="r-nombre" placeholder="Nombre Completo" required>
+                    <input type="text" id="r-documento" placeholder="Documento (C.C. o T.I.)" required>
                     <input type="email" id="r-email" placeholder="Correo Electrónico" required>
                     <input type="password" id="r-pwd" placeholder="Contraseña" required>
                     <button type="submit" class="btn-secondary">Registrarse</button>
@@ -121,8 +120,11 @@
         </div>
 
         <div id="view-entradas" class="hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1>Mis Entradas</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1>Mis Entradas</h1>
+                    <h3 style="color: var(--gold); margin-top: -15px;">⭐ Tienes <span id="user-puntos">0</span> Puntos CINEX</h3>
+                </div>
                 <button class="btn-primary" onclick="initApp()">Regresar al Inicio</button>
             </div>
             <div id="lista-entradas"></div>
@@ -167,16 +169,16 @@
                         <input type="date" id="f-fecha" required>
                         <input type="time" id="f-hora" required>
                         <input type="number" id="f-precio" placeholder="Precio Base ($)" required>
-                        <button type="submit" class="btn-secondary">Asignar a Sala</button>
+                        <button type="submit" id="btn-guardar-funcion" class="btn-secondary">Asignar a Sala</button>
                     </form>
                     
-                    <h2 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #444;">Agregar Producto Confitería</h2>
+                    <h2 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #444;">Agregar Confitería</h2>
                     <form id="form-confiteria" onsubmit="addConfiteria(event)">
-                        <input type="text" id="c-nombre" placeholder="Nombre del combo o producto" required>
+                        <input type="text" id="c-nombre" placeholder="Nombre del producto" required>
                         <input type="number" id="c-precio" placeholder="Precio ($)" required>
                         <label style="display:block; margin-top:10px; color:#aaa;">Imagen del producto:</label>
                         <input type="file" id="c-img" accept="image/*" required>
-                        <button type="submit" class="btn-outline" style="margin-top: 15px; width: 100%;">Añadir Producto</button>
+                        <button type="submit" id="btn-guardar-confi" class="btn-outline" style="margin-top: 15px; width: 100%;">Añadir Producto</button>
                     </form>
                 </div>
 
@@ -200,6 +202,41 @@
                                 </tr>
                             </thead>
                             <tbody id="tabla-admin-peliculas"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel" style="grid-column: 1 / -1; margin-top: 20px;">
+                    <h2>Funciones Programadas</h2>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; text-align:left; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th style="padding: 10px;">Película</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Precio</th>
+                                    <th>Ocupación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-admin-funciones"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-panel" style="grid-column: 1 / -1; margin-top: 20px;">
+                    <h2>Confitería Registrada</h2>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; text-align:left; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--primary);">
+                                    <th style="padding: 10px;">Imagen</th>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-admin-confiteria"></tbody>
                         </table>
                     </div>
                 </div>

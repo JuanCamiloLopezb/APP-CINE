@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -12,7 +13,6 @@ app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 
 def get_db():
     host = os.getenv('DB_HOST', 'localhost')
-    # Desactivamos SSL si estás corriendo el proyecto en tu PC local
     use_ssl = {"fake_flag": True} if host not in ['localhost', '127.0.0.1'] else None
     
     return pymysql.connect(
@@ -53,7 +53,6 @@ def register():
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
-    # Limpieza de datos para coincidir exactamente
     email = data['email'].strip().lower()
     password = data['password'].strip()
     
@@ -69,7 +68,6 @@ def login():
         else:
             return jsonify({"error": "Correo o contraseña incorrectos"}), 401
     except Exception as e:
-        # Muestra el error real si la BD falla
         return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 # --- ADMIN ---
@@ -136,26 +134,92 @@ def edit_pelicula(id):
 def delete_pelicula(id):
     conn = get_db()
     try:
+        conn.begin() 
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM peliculas WHERE id=%s", (id,))
-        conn.commit()
-        return jsonify({"success": True})
-    except pymysql.IntegrityError:
-        return jsonify({"error": "No puedes eliminar esta película porque tiene funciones y boletos vendidos."}), 400
-    finally: conn.close()
+           
+            cursor.execute("SELECT id FROM funciones WHERE pelicula_id=%s", (id,))
+            funciones = cursor.fetchall()
+            
+            if funciones:
+                funciones_ids = [str(f['id']) for f in funciones]
+                placeholders_f = ','.join(['%s'] * len(funciones_ids))
+                
+                cursor.execute(f"SELECT id FROM tiquetes WHERE funcion_id IN ({placeholders_f})", funciones_ids)
+                tiquetes = cursor.fetchall()
+                
+                if tiquetes:
+                    tiquetes_ids = [str(t['id']) for t in tiquetes]
+                    placeholders_t = ','.join(['%s'] * len(tiquetes_ids))
+                    
+                    cursor.execute(f"DELETE FROM detalle_tiquete_asientos WHERE tiquete_id IN ({placeholders_t})", tiquetes_ids)
+                    
+                    cursor.execute(f"DELETE FROM tiquetes WHERE id IN ({placeholders_t})", tiquetes_ids)
+                
+                cursor.execute(f"DELETE FROM funciones WHERE id IN ({placeholders_f})", funciones_ids)
 
+            cursor.execute("DELETE FROM peliculas WHERE id=%s", (id,))
+            
+        conn.commit()
+        return jsonify({"success": True, "mensaje": "Película eliminada exitosamente."})
+    except Exception as e:
+        conn.rollback() 
+        return jsonify({"error": f"Error al eliminar la película: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals() and conn.open: conn.close()
+        
 @app.route('/api/admin/funciones', methods=['POST'])
 def add_funcion():
     data = request.json
-    conn = get_db()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT id FROM funciones WHERE fecha=%s AND hora=%s", (data['fecha'], data['hora']))
-        if cursor.fetchone(): return jsonify({"error": "Ya existe una función en esa fecha y hora."}), 400
-        cursor.execute("INSERT INTO funciones (pelicula_id, fecha, hora, precio_base) VALUES (%s, %s, %s, %s)",
-                       (data['pelicula_id'], data['fecha'], data['hora'], data['precio_base']))
-    conn.commit()
-    conn.close()
-    return jsonify({"success": True})
+    try:
+        conn = get_db()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT duracion FROM peliculas WHERE id=%s", (data['pelicula_id'],))
+            peli_nueva = cursor.fetchone()
+            if not peli_nueva: return jsonify({"error": "Película no encontrada."}), 400
+            
+            duracion_nueva = peli_nueva['duracion']
+            
+            hora_input = data['hora']
+            if len(hora_input) == 5: hora_input += ":00" 
+            inicio_nuevo = datetime.strptime(hora_input, "%H:%M:%S")
+            
+            fin_nuevo = inicio_nuevo + timedelta(minutes=duracion_nueva + 20)
+
+            cursor.execute("""
+                SELECT f.hora, p.duracion, p.titulo 
+                FROM funciones f 
+                JOIN peliculas p ON f.pelicula_id = p.id 
+                WHERE f.fecha=%s
+            """, (data['fecha'],))
+            funciones_dia = cursor.fetchall()
+
+            
+            for f in funciones_dia:
+                
+                if isinstance(f['hora'], timedelta):
+                    inicio_ex = datetime.strptime("00:00:00", "%H:%M:%S") + f['hora']
+                else:
+                    hora_str = str(f['hora'])
+                    if len(hora_str) == 5: hora_str += ":00"
+                    inicio_ex = datetime.strptime(hora_str, "%H:%M:%S")
+                
+                fin_ex = inicio_ex + timedelta(minutes=f['duracion'] + 20)
+
+                
+                if inicio_nuevo < fin_ex and fin_nuevo > inicio_ex:
+                    mensaje = f"No es posible programar la funcion debido a que la sala está ocupada con '{f['titulo']}' de {inicio_ex.strftime('%H:%M')} a {fin_ex.strftime('%H:%M')} Selecciona otro horario o fecha."
+                    return jsonify({"error": mensaje}), 400
+
+           
+            cursor.execute("INSERT INTO funciones (pelicula_id, fecha, hora, precio_base) VALUES (%s, %s, %s, %s)",
+                           (data['pelicula_id'], data['fecha'], data['hora'], data['precio_base']))
+        
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
+    finally:
+        if 'conn' in locals() and conn.open: conn.close()
 
 @app.route('/api/admin/validar', methods=['POST'])
 def validar_tiquete():
